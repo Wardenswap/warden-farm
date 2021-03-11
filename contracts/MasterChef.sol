@@ -219,7 +219,7 @@ contract MasterChef is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 wardenReward = multiplier.mul(wardenPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        warden.mint(devaddr, wardenReward.div(10));
+        warden.mint(devaddr, wardenReward.div(8));
         warden.mint(address(tst), wardenReward);
         pool.accWardenPerShare = pool.accWardenPerShare.add(wardenReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;

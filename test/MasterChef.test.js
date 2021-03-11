@@ -72,7 +72,7 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       await this.chef.withdraw(1, '10', { from: alice });
       assert.equal((await this.lp1.balanceOf(alice)).toString(), '1950');
       assert.equal((await this.warden.balanceOf(alice)).toString(), '999');
-      assert.equal((await this.warden.balanceOf(dev)).toString(), '100');
+      assert.equal((await this.warden.balanceOf(dev)).toString(), '124');
 
       await this.lp1.approve(this.chef.address, '100', { from: bob });
       assert.equal((await this.lp1.balanceOf(bob)).toString(), '2000');
