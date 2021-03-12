@@ -120,7 +120,11 @@ contract MasterChef is Ownable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
+    function add(
+        uint256 _allocPoint,
+        IERC20 _lpToken,
+        bool _withUpdate
+    ) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -132,33 +136,19 @@ contract MasterChef is Ownable {
             lastRewardBlock: lastRewardBlock,
             accWardenPerShare: 0
         }));
-        updateStakingPool();
     }
 
     // Update the given pool's WARDEN allocation point. Can only be called by the owner.
-    function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner {
+    function set(
+        uint256 _pid,
+        uint256 _allocPoint,
+        bool _withUpdate
+    ) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
-        uint256 prevAllocPoint = poolInfo[_pid].allocPoint;
         poolInfo[_pid].allocPoint = _allocPoint;
-        if (prevAllocPoint != _allocPoint) {
-            updateStakingPool();
-        }
-    }
-
-    function updateStakingPool() internal {
-        uint256 length = poolInfo.length;
-        uint256 points = 0;
-        for (uint256 pid = 1; pid < length; ++pid) {
-            points = points.add(poolInfo[pid].allocPoint);
-        }
-        if (points != 0) {
-            points = points.div(3);
-            totalAllocPoint = totalAllocPoint.sub(poolInfo[0].allocPoint).add(points);
-            poolInfo[0].allocPoint = points;
-        }
     }
 
     // Set the migrator contract. Can only be called by the owner.

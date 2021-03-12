@@ -46,14 +46,14 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       assert.equal((await this.warden.balanceOf(alice)).toString(), '0');
       await this.chef.deposit(1, '20', { from: alice });
       await this.chef.withdraw(1, '20', { from: alice });
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '263');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '298');
 
       await this.warden.approve(this.chef.address, '1000', { from: alice });
       await this.chef.enterStaking('20', { from: alice });
       await this.chef.enterStaking('0', { from: alice });
       await this.chef.enterStaking('0', { from: alice });
       await this.chef.enterStaking('0', { from: alice });
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '993');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '725');
       // assert.equal((await this.chef.getPoolPoint(0, { from: minter })).toString(), '1900');
     })
 
