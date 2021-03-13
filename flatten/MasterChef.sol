@@ -1686,11 +1686,11 @@ contract MasterChef is Ownable {
                 safeWardenTransfer(msg.sender, pending);
             }
         }
+        user.amount = user.amount.add(_amount);
+        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
         if (_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-            user.amount = user.amount.add(_amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
     }
 
@@ -1707,11 +1707,11 @@ contract MasterChef is Ownable {
         if(pending > 0) {
             safeWardenTransfer(msg.sender, pending);
         }
+        user.amount = user.amount.sub(_amount);
+        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
         if(_amount > 0) {
-            user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -1726,11 +1726,11 @@ contract MasterChef is Ownable {
                 safeWardenTransfer(msg.sender, pending);
             }
         }
+        user.amount = user.amount.add(_amount);
+        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
         if(_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-            user.amount = user.amount.add(_amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
 
         tst.mint(msg.sender, _amount);
         emit Deposit(msg.sender, 0, _amount);
@@ -1746,13 +1746,12 @@ contract MasterChef is Ownable {
         if(pending > 0) {
             safeWardenTransfer(msg.sender, pending);
         }
+        user.amount = user.amount.sub(_amount);
+        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
+        tst.burn(msg.sender, _amount);
         if(_amount > 0) {
-            user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accWardenPerShare).div(1e12);
-
-        tst.burn(msg.sender, _amount);
         emit Withdraw(msg.sender, 0, _amount);
     }
 
@@ -1760,10 +1759,13 @@ contract MasterChef is Ownable {
     function emergencyWithdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        pool.lpToken.safeTransfer(address(msg.sender), user.amount);
-        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
+
+        uint256 _amount = user.amount;
         user.amount = 0;
         user.rewardDebt = 0;
+
+        pool.lpToken.safeTransfer(address(msg.sender), _amount);
+        emit EmergencyWithdraw(msg.sender, _pid, _amount);
     }
 
     // Safe warden transfer function, just in case if rounding error causes pool to not have enough WARDENs.
