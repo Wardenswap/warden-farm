@@ -23,6 +23,7 @@
     "@nomiclabs/buidler-web3": "^1.3.4",
     "chai": "^4.2.0",
     "ethereum-waffle": "^3.0.0",
+    "ethereumjs-util": "^7.0.9",
     "ethers": "^5.0.14",
     "solidity-coverage": "^0.7.13",
     "truffle-hdwallet-provider": "^1.0.17",
