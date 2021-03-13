@@ -5,7 +5,8 @@
   "scripts": {
     "migrate": "truffle migrate --network bscTestnet --reset",
     "compile": "truffle compile --network bscTestnet",
-    "test": "npx builder test",
+    "test": "npx builder test **/**.test.js **/**.spec.js",
+    "test2": "npx builder test test/MasterChef_extend.magneticfield.js",
     "coverage": "npx builder coverage",
     "flatten:masterchef": "truffle-flattener contracts/MasterChef.sol > flatten/MasterChef.sol"
   },

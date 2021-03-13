@@ -46,14 +46,14 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       assert.equal((await this.warden.balanceOf(alice)).toString(), '0');
       await this.chef.deposit(1, '20', { from: alice });
       await this.chef.withdraw(1, '20', { from: alice });
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '298');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '350');
 
       await this.warden.approve(this.chef.address, '1000', { from: alice });
       await this.chef.enterStaking('20', { from: alice });
       await this.chef.enterStaking('0', { from: alice });
       await this.chef.enterStaking('0', { from: alice });
       await this.chef.enterStaking('0', { from: alice });
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '725');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '330');
       // assert.equal((await this.chef.getPoolPoint(0, { from: minter })).toString(), '1900');
     })
 
@@ -71,15 +71,15 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       assert.equal((await this.lp1.balanceOf(alice)).toString(), '1940');
       await this.chef.withdraw(1, '10', { from: alice });
       assert.equal((await this.lp1.balanceOf(alice)).toString(), '1950');
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '999');
-      assert.equal((await this.warden.balanceOf(dev)).toString(), '124');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '1332');
+      assert.equal((await this.warden.balanceOf(dev)).toString(), '164');
 
       await this.lp1.approve(this.chef.address, '100', { from: bob });
       assert.equal((await this.lp1.balanceOf(bob)).toString(), '2000');
       await this.chef.deposit(1, '50', { from: bob });
       assert.equal((await this.lp1.balanceOf(bob)).toString(), '1950');
       await this.chef.deposit(1, '0', { from: bob });
-      assert.equal((await this.warden.balanceOf(bob)).toString(), '125');
+      assert.equal((await this.warden.balanceOf(bob)).toString(), '166');
       await this.chef.emergencyWithdraw(1, { from: bob });
       assert.equal((await this.lp1.balanceOf(bob)).toString(), '2000');
     })
@@ -96,13 +96,13 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       await this.warden.approve(this.chef.address, '250', { from: alice });
       await this.chef.enterStaking('240', { from: alice }); //3
       assert.equal((await this.syrup.balanceOf(alice)).toString(), '240');
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '10');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '93');
       await this.chef.enterStaking('10', { from: alice }); //4
       assert.equal((await this.syrup.balanceOf(alice)).toString(), '250');
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '249');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '83');
       await this.chef.leaveStaking(250);
       assert.equal((await this.syrup.balanceOf(alice)).toString(), '0');
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '749');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '333');
 
     });
 
@@ -131,8 +131,8 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       await this.chef.deposit(1, '0', { from: alice });
       await this.chef.deposit(1, '0', { from: bob });
 
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '700');
-      assert.equal((await this.warden.balanceOf(bob)).toString(), '150');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '616');
+      assert.equal((await this.warden.balanceOf(bob)).toString(), '233');
 
       await time.advanceBlockTo('265');
 
@@ -141,8 +141,8 @@ contract('MasterChef', ([alice, bob, carol, dev, minter]) => {
       await this.chef.deposit(1, '0', { from: alice });
       await this.chef.deposit(1, '0', { from: bob });
 
-      assert.equal((await this.warden.balanceOf(alice)).toString(), '700');
-      assert.equal((await this.warden.balanceOf(bob)).toString(), '150');
+      assert.equal((await this.warden.balanceOf(alice)).toString(), '616');
+      assert.equal((await this.warden.balanceOf(bob)).toString(), '233');
 
       await this.chef.leaveStaking('50', { from: alice });
       await this.chef.leaveStaking('100', { from: bob });

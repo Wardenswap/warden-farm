@@ -48,6 +48,13 @@ describe("MasterChef Extend", () => {
     expect(warden).to.equal(wardenToken.address)
     expect(devaddr).to.equal(dev.address)
     expect(owner).to.equal(chef.address)
+
+    expect(await chef.poolLength()).to.equal(1)
+    const pool0 = await chef.poolInfo(0)
+    expect(pool0.lpToken).to.equal(wardenToken.address)
+    expect(pool0.allocPoint).to.equal('0')
+    expect(pool0.lastRewardBlock).to.equal('0')
+    expect(pool0.accWardenPerShare).to.equal('0')
   })
 
   it("should allow dev and only dev to update dev", async () => {
