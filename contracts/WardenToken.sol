@@ -11,6 +11,13 @@ contract WardenToken is ERC20('WardenSwap Token', 'Warden'), Ownable {
         _moveDelegates(address(0), _delegates[_to], _amount);
     }
 
+    /**
+    * @dev Returns the bep token owner.
+    */
+    function getOwner() external view returns (address) {
+        return owner();
+    }
+
     // Copied and modified from YAM code:
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol

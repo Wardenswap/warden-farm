@@ -18,6 +18,13 @@ contract Tempest is ERC20('Tempest', 'TST'), Ownable {
         _moveDelegates(_delegates[_from], address(0), _amount);
     }
 
+    /**
+    * @dev Returns the bep token owner.
+    */
+    function getOwner() external view returns (address) {
+        return owner();
+    }
+
     // The WAD TOKEN!
     WardenToken public warden;
 
