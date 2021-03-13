@@ -101,12 +101,10 @@ contract MasterChef is Ownable {
         // staking pool
         poolInfo.push(PoolInfo({
             lpToken: _warden,
-            allocPoint: 1000,
+            allocPoint: 0,
             lastRewardBlock: startBlock,
             accWardenPerShare: 0
         }));
-
-        totalAllocPoint = 1000;
 
     }
 
