@@ -114,7 +114,7 @@ describe("MasterChef Extend", () => {
       expect(await lp.balanceOf(bob.address)).to.equal("1000")
     })
 
-    it("should give out SUSHIs only after farming time", async () => {
+    it("should give out WADs only after farming time", async () => {
       // 100 per block farming rate starting at block 100 with bonus until block 1000
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "100")
       await chef.deployed()
@@ -153,7 +153,7 @@ describe("MasterChef Extend", () => {
       expect(await wardenToken.totalSupply()).to.equal("5625")
     })
 
-    it("should not distribute SUSHIs if no one deposit", async () => {
+    it("should not distribute WADs if no one deposit", async () => {
       // 100 per block farming rate starting at block 200 with bonus until block 1000
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "200")
       await chef.deployed()
@@ -182,7 +182,7 @@ describe("MasterChef Extend", () => {
       expect(await lp.balanceOf(bob.address)).to.equal("1000")
     })
 
-    it("should distribute SUSHIs properly for each staker", async () => {
+    it("should distribute WADs properly for each staker", async () => {
       // 100 per block farming rate starting at block 300 with bonus until block 1000
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "300")
       await chef.deployed()
@@ -192,54 +192,48 @@ describe("MasterChef Extend", () => {
       await chef.updateMultiplier(10)
 
       await chef.add("100", lp.address, true)
-      await lp.connect(alice).approve(chef.address, "1000", {
-        from: alice.address,
-      })
-      await lp.connect(bob).approve(chef.address, "1000", {
-        from: bob.address,
-      })
-      await lp.connect(carol).approve(chef.address, "1000", {
-        from: carol.address,
-      })
+      await lp.connect(alice).approve(chef.address, "1000")
+      await lp.connect(bob).approve(chef.address, "1000")
+      await lp.connect(carol).approve(chef.address, "1000")
       // Alice deposits 10 LPs at block 310
       await advanceBlockTo("309")
-      await chef.connect(alice).deposit(1, "10", { from: alice.address })
+      await chef.connect(alice).deposit(1, "10")
       // Bob deposits 20 LPs at block 314
       await advanceBlockTo("313")
-      await chef.connect(bob).deposit(1, "20", { from: bob.address })
+      await chef.connect(bob).deposit(1, "20")
       // Carol deposits 30 LPs at block 318
       await advanceBlockTo("317")
-      await chef.connect(carol).deposit(1, "30", { from: carol.address })
+      await chef.connect(carol).deposit(1, "30")
       // Alice deposits 10 more LPs at block 320. At this point:
       //   Alice should have: 4*1000 + 4*1/3*1000 + 2*1/6*1000 = 5666
       //   MasterChef should have the remaining: 10000 - 5666 = 4334
       await advanceBlockTo("319")
-      await chef.connect(alice).deposit(1, "10", { from: alice.address })
+      await chef.connect(alice).deposit(1, "10")
       expect(await wardenToken.totalSupply()).to.equal("11250")
       expect(await wardenToken.balanceOf(alice.address)).to.equal("5666")
       expect(await wardenToken.balanceOf(bob.address)).to.equal("0")
       expect(await wardenToken.balanceOf(carol.address)).to.equal("0")
-      expect(await wardenToken.balanceOf(chef.address)).to.equal("0") // todo:
+      expect(await wardenToken.balanceOf(tempest.address)).to.equal("4334")
       expect(await wardenToken.balanceOf(dev.address)).to.equal("1250")
       // Bob withdraws 5 LPs at block 330. At this point:
       //   Bob should have: 4*2/3*1000 + 2*2/6*1000 + 10*2/7*1000 = 6190
       await advanceBlockTo("329")
-      await chef.connect(bob).withdraw(1, "5", { from: bob.address })
+      await chef.connect(bob).withdraw(1, "5")
       expect(await wardenToken.totalSupply()).to.equal("22500")
       expect(await wardenToken.balanceOf(alice.address)).to.equal("5666")
       expect(await wardenToken.balanceOf(bob.address)).to.equal("6190")
       expect(await wardenToken.balanceOf(carol.address)).to.equal("0")
-      expect(await wardenToken.balanceOf(chef.address)).to.equal("0") // todo:
+      expect(await wardenToken.balanceOf(tempest.address)).to.equal("8144")
       expect(await wardenToken.balanceOf(dev.address)).to.equal("2500")
       // Alice withdraws 20 LPs at block 340.
       // Bob withdraws 15 LPs at block 350.
       // Carol withdraws 30 LPs at block 360.
       await advanceBlockTo("339")
-      await chef.connect(alice).withdraw(1, "20", { from: alice.address })
+      await chef.connect(alice).withdraw(1, "20")
       await advanceBlockTo("349")
-      await chef.connect(bob).withdraw(1, "15", { from: bob.address })
+      await chef.connect(bob).withdraw(1, "15")
       await advanceBlockTo("359")
-      await chef.connect(carol).withdraw(1, "30", { from: carol.address })
+      await chef.connect(carol).withdraw(1, "30")
       expect(await wardenToken.totalSupply()).to.equal("56250")
       expect(await wardenToken.balanceOf(dev.address)).to.equal("6250")
       // Alice should have: 5666 + 10*2/7*1000 + 10*2/6.5*1000 = 11600
@@ -254,7 +248,7 @@ describe("MasterChef Extend", () => {
       expect(await lp.balanceOf(carol.address)).to.equal("1000")
     })
 
-    it("should give proper SUSHIs allocation to each pool", async () => {
+    it("should give proper WADs allocation to each pool", async () => {
       // 100 per block farming rate starting at block 400 with bonus until block 1000
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "400")
       await wardenToken.transferOwnership(chef.address)
@@ -285,7 +279,7 @@ describe("MasterChef Extend", () => {
       expect(await chef.pendingWarden(2, bob.address)).to.equal("3333")
     })
 
-    it("should stop giving bonus SUSHIs correctly", async () => {
+    it("should stop giving bonus WADs correctly", async () => {
       // 100 per block farming rate starting at block 500 with bonus until block 600
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
       await wardenToken.transferOwnership(chef.address)
