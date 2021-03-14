@@ -101,7 +101,9 @@ describe("MasterChef Extend", () => {
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "100")
       await chef.deployed()
 
-      await chef.add("100", lp.address, true)
+      await expect(chef.add("100", lp.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(1, 100, lp.address, true)
 
       await lp.connect(bob).approve(chef.address, "1000")
 
@@ -121,10 +123,15 @@ describe("MasterChef Extend", () => {
 
       await wardenToken.transferOwnership(chef.address)
       await tempest.transferOwnership(chef.address)
-      await chef.set(0, 0, true)
+      await expect(chef.set(0, 0, true))
+      .to.emit(chef, 'LogSetPool')
+      .withArgs(0, 0, true)
+
       await chef.updateMultiplier(10)
 
-      await chef.add("100", lp.address, true)
+      await expect(chef.add("100", lp.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(1, 100, lp.address, true)
 
       await lp.connect(bob).approve(chef.address, "1000")
       await chef.connect(bob).deposit(1, "100")
@@ -146,7 +153,9 @@ describe("MasterChef Extend", () => {
       expect(await wardenToken.balanceOf(bob.address)).to.equal("1000")
 
       await advanceBlockTo("104")
-      await chef.connect(bob).deposit(1, "0") // block 105
+      await expect(chef.connect(bob).deposit(1, "0")) // block 105
+      .to.emit(chef, 'LogUpdatePool')
+      .withArgs(1, 105, 100, 50000000000000)
 
       expect(await wardenToken.balanceOf(bob.address)).to.equal("5000")
       expect(await wardenToken.balanceOf(dev.address)).to.equal("625")
@@ -159,10 +168,16 @@ describe("MasterChef Extend", () => {
       await chef.deployed()
       await wardenToken.transferOwnership(chef.address)
       await tempest.transferOwnership(chef.address)
-      await chef.set(0, 0, true)
+      await expect(chef.set(0, 0, true))
+      .to.emit(chef, 'LogSetPool')
+      .withArgs(0, 0, true)
+
       await chef.updateMultiplier(10)
 
-      await chef.add("100", lp.address, true)
+      await expect(chef.add("100", lp.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(1, 100, lp.address, true)
+
       await lp.connect(bob).approve(chef.address, "1000")
       await advanceBlockTo("199")
       expect(await wardenToken.totalSupply()).to.equal("0")
@@ -175,7 +190,10 @@ describe("MasterChef Extend", () => {
       expect(await wardenToken.balanceOf(dev.address)).to.equal("0")
       expect(await lp.balanceOf(bob.address)).to.equal("990")
       await advanceBlockTo("219")
-      await chef.connect(bob).withdraw(1, "10") // block 220
+      await expect(chef.connect(bob).withdraw(1, "10")) // block 220
+      .to.emit(chef, 'LogUpdatePool')
+      .withArgs(1, 220, 10, 1000000000000000)
+
       expect(await wardenToken.totalSupply()).to.equal("11250")
       expect(await wardenToken.balanceOf(bob.address)).to.equal("10000")
       expect(await wardenToken.balanceOf(dev.address)).to.equal("1250")
@@ -188,10 +206,16 @@ describe("MasterChef Extend", () => {
       await chef.deployed()
       await wardenToken.transferOwnership(chef.address)
       await tempest.transferOwnership(chef.address)
-      await chef.set(0, 0, true)
+      await expect(chef.set(0, 0, true))
+      .to.emit(chef, 'LogSetPool')
+      .withArgs(0, 0, true)
+
       await chef.updateMultiplier(10)
 
-      await chef.add("100", lp.address, true)
+      await expect(chef.add("100", lp.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(1, 100, lp.address, true)
+
       await lp.connect(alice).approve(chef.address, "1000")
       await lp.connect(bob).approve(chef.address, "1000")
       await lp.connect(carol).approve(chef.address, "1000")
@@ -253,19 +277,28 @@ describe("MasterChef Extend", () => {
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "400")
       await wardenToken.transferOwnership(chef.address)
       await tempest.transferOwnership(chef.address)
-      await chef.set(0, 0, true)
+      await expect(chef.set(0, 0, true))
+      .to.emit(chef, 'LogSetPool')
+      .withArgs(0, 0, true)
+
       await chef.updateMultiplier(10)
 
       await lp.connect(alice).approve(chef.address, "1000", { from: alice.address })
       await lp2.connect(bob).approve(chef.address, "1000", { from: bob.address })
       // Add first LP to the pool with allocation 1
-      await chef.add("10", lp.address, true)
+      await expect(chef.add("10", lp.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(1, 10, lp.address, true)
+
       // Alice deposits 10 LPs at block 410
       await advanceBlockTo("409")
       await chef.connect(alice).deposit(1, "10", { from: alice.address })
       // Add LP2 to the pool with allocation 2 at block 420
       await advanceBlockTo("419")
-      await chef.add("20", lp2.address, true)
+      await expect(chef.add("20", lp2.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(2, 20, lp2.address, true)
+
       // Alice should have 10*1000 pending reward
       expect(await chef.pendingWarden(1, alice.address)).to.equal("10000")
       // Bob deposits 10 LP2s at block 425
@@ -284,11 +317,17 @@ describe("MasterChef Extend", () => {
       const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
       await wardenToken.transferOwnership(chef.address)
       await tempest.transferOwnership(chef.address)
-      await chef.set(0, 0, true)
+      await expect(chef.set(0, 0, true))
+      .to.emit(chef, 'LogSetPool')
+      .withArgs(0, 0, true)
+
       await chef.updateMultiplier(10)
 
       await lp.connect(alice).approve(chef.address, "1000", { from: alice.address })
-      await chef.add("1", lp.address, true)
+      await expect(chef.add("1", lp.address, true))
+      .to.emit(chef, 'LogPoolAddition')
+      .withArgs(1, 1, lp.address, true)
+
       // Alice deposits 10 LPs at block 590
       await advanceBlockTo("589")
       await chef.connect(alice).deposit(1, "10", { from: alice.address })
@@ -299,6 +338,16 @@ describe("MasterChef Extend", () => {
       await chef.connect(alice).deposit(1, "0", { from: alice.address })
       expect(await chef.pendingWarden(1, alice.address)).to.equal("0")
       expect(await wardenToken.balanceOf(alice.address)).to.equal("16000")
+    })
+
+    it('Should emit update multiplier correctly', async () => {
+      const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
+      await wardenToken.transferOwnership(chef.address)
+      await tempest.transferOwnership(chef.address)
+
+      await expect(chef.updateMultiplier(5))
+      .to.emit(chef, 'LogUpdateMultiplier')
+      .withArgs(5)
     })
   })
 })
