@@ -1541,6 +1541,10 @@ contract MasterChef is Ownable {
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    event LogPoolAddition(uint256 indexed pid, uint256 allocPoint, IERC20 indexed lpToken, bool indexed wwithUpdate);
+    event LogSetPool(uint256 indexed pid, uint256 allocPoint, bool indexed wwithUpdate);
+    event LogUpdatePool(uint256 indexed pid, uint256 lastRewardBlock, uint256 lpSupply, uint256 accWardenPerShare);
+    event LogUpdateMultiplier(uint256 multiplierNumber);
 
     constructor(
         WardenToken _warden,
@@ -1562,11 +1566,12 @@ contract MasterChef is Ownable {
             lastRewardBlock: startBlock,
             accWardenPerShare: 0
         }));
-
+        emit LogPoolAddition(0, 0, _warden, true);
     }
 
     function updateMultiplier(uint256 multiplierNumber) public onlyOwner {
         BONUS_MULTIPLIER = multiplierNumber;
+        emit LogUpdateMultiplier(multiplierNumber);
     }
 
     function poolLength() external view returns (uint256) {
@@ -1591,6 +1596,7 @@ contract MasterChef is Ownable {
             lastRewardBlock: lastRewardBlock,
             accWardenPerShare: 0
         }));
+        emit LogPoolAddition(poolInfo.length.sub(1), _allocPoint, _lpToken, _withUpdate);
     }
 
     // Update the given pool's WARDEN allocation point. Can only be called by the owner.
@@ -1604,6 +1610,7 @@ contract MasterChef is Ownable {
         }
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
         poolInfo[_pid].allocPoint = _allocPoint;
+        emit LogSetPool(_pid, _allocPoint, _withUpdate);
     }
 
     // Set the migrator contract. Can only be called by the owner.
@@ -1668,6 +1675,7 @@ contract MasterChef is Ownable {
         warden.mint(address(tst), wardenReward);
         pool.accWardenPerShare = pool.accWardenPerShare.add(wardenReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
+        emit LogUpdatePool(_pid, pool.lastRewardBlock, lpSupply, pool.accWardenPerShare);
     }
 
     // Deposit LP tokens to MasterChef for WARDEN allocation.
