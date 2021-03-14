@@ -8,7 +8,9 @@
     "test": "npx builder test **/**.test.js **/**.spec.js",
     "test2": "npx builder test test/MasterChef_extend.magneticfield.js",
     "coverage": "npx builder coverage",
-    "flatten:masterchef": "truffle-flattener contracts/MasterChef.sol > flatten/MasterChef.sol"
+    "flatten:masterchef": "truffle-flattener contracts/MasterChef.sol > flatten/MasterChef.sol",
+    "flatten:wardentoken": "truffle-flattener contracts/WardenToken.sol > flatten/WardenToken.sol",
+    "flatten:tempest": "truffle-flattener contracts/Tempest.sol > flatten/Tempest.sol"
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.1.0",
