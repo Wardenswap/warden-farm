@@ -35,7 +35,7 @@ describe("MasterChef Extend", () => {
   })
 
   it("should set correct state variables", async () => {
-    const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
+    const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "123000")
     await chef.deployed()
 
     await wardenToken.transferOwnership(chef.address)
@@ -53,8 +53,15 @@ describe("MasterChef Extend", () => {
     const pool0 = await chef.poolInfo(0)
     expect(pool0.lpToken).to.equal(wardenToken.address)
     expect(pool0.allocPoint).to.equal('0')
-    expect(pool0.lastRewardBlock).to.equal('0')
+    expect(pool0.lastRewardBlock).to.equal('123000')
     expect(pool0.accWardenPerShare).to.equal('0')
+
+    expect(await chef.tst()).to.equal(tempest.address)
+    expect(await chef.wardenPerBlock()).to.equal('1000')
+    expect(await chef.BONUS_MULTIPLIER()).to.equal('1')
+    expect(await chef.migrator()).to.equal(constants.AddressZero)
+    expect(await chef.totalAllocPoint()).to.equal('0')
+    expect(await chef.startBlock()).to.equal('123000')
   })
 
   it("should allow dev and only dev to update dev", async () => {
@@ -348,6 +355,44 @@ describe("MasterChef Extend", () => {
       await expect(chef.updateMultiplier(5))
       .to.emit(chef, 'LogUpdateMultiplier')
       .withArgs(5)
+    })
+
+    describe('Execute by non-owner', async () => {
+      it('Should fail when updaing multiplier by non-owner', async () => {
+        const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
+        await wardenToken.transferOwnership(chef.address)
+        await tempest.transferOwnership(chef.address)
+  
+        await expect(chef.connect(bob).updateMultiplier(5))
+        .to.revertedWith('Ownable: caller is not the owner')
+      })
+  
+      it('Should fail when adding pool by non-owner', async () => {
+        const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
+        await wardenToken.transferOwnership(chef.address)
+        await tempest.transferOwnership(chef.address)
+  
+        await expect(chef.connect(bob).add("100", lp.address, true))
+        .to.revertedWith('Ownable: caller is not the owner')
+      })
+  
+      it('Should fail when setting pool by non-owner', async () => {
+        const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
+        await wardenToken.transferOwnership(chef.address)
+        await tempest.transferOwnership(chef.address)
+  
+        await expect(chef.connect(bob).set(0, 0, true))
+        .to.revertedWith('Ownable: caller is not the owner')
+      })
+  
+      it('Should fail when setting migrator by non-owner', async () => {
+        const chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "100", "500")
+        await wardenToken.transferOwnership(chef.address)
+        await tempest.transferOwnership(chef.address)
+  
+        await expect(chef.connect(bob).setMigrator(minter.address))
+        .to.revertedWith('Ownable: caller is not the owner')
+      })
     })
   })
 })
