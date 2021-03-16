@@ -5,9 +5,9 @@
   "scripts": {
     "migrate": "truffle migrate --network bscTestnet --reset",
     "compile": "truffle compile --network bscTestnet",
-    "test": "npx builder test **/**.test.js **/**.spec.js",
-    "test2": "npx builder test test/MasterChef_extend.magneticfield.js",
-    "coverage": "npx builder coverage",
+    "test": "npx buidler test **/**.test.js **/**.spec.js",
+    "test2": "npx buidler test test/MasterChef_extend.magneticfield.js",
+    "coverage": "npx buidler coverage",
     "flatten:masterchef": "truffle-flattener contracts/MasterChef.sol > flatten/MasterChef.sol",
     "flatten:wardentoken": "truffle-flattener contracts/WardenToken.sol > flatten/WardenToken.sol",
     "flatten:tempest": "truffle-flattener contracts/Tempest.sol > flatten/Tempest.sol"
