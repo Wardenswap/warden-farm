@@ -1,6 +1,6 @@
 # Warden Farming 🥞
 
-https://www.wardenswap.finance. Feel free to read the code. More details coming soon.
+https://www.wardenswap.com. Feel free to read the code. More details coming soon.
 
 ## Deployed Contracts / Hash
 
