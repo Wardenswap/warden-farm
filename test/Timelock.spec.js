@@ -1,6 +1,6 @@
 const { expect } = require('chai')
 const chai = require('chai')
-const { Contract, utils, constants } = require ('ethers')
+const { Contract, utils, constants, BigNumber } = require ('ethers')
 const { solidity, deployContract } = require('ethereum-waffle')
 const { waffle } = require ('@nomiclabs/buidler')
 const { ecsign } = require('ethereumjs-util')
@@ -10,7 +10,7 @@ const { encodeParameters } = require('./utilities')
 
 chai.use(solidity)
 
-describe("Timelock", function () {
+describe("Timelock", () => {
   const [alice, bob, carol, dev, minter] = waffle.provider.getWallets()
 
   let MasterChef
@@ -35,11 +35,22 @@ describe("Timelock", function () {
     tempest = await Tempest.deploy(wardenToken.address)
     await tempest.deployed()
 
-    timelock = await Timelock.deploy(bob.address, "259200")
+    timelock = await Timelock.deploy(bob.address, "259200") // 3 days
     await timelock.deployed()
   })
 
-  it("should not allow non-owner to do operation", async function () {
+  it('Should init data correctly', async () => {
+    expect(await timelock.GRACE_PERIOD()).to.equal(duration.days(14))
+    expect(await timelock.MINIMUM_DELAY()).to.equal(duration.days(1))
+    expect(await timelock.MAXIMUM_DELAY()).to.equal(duration.days(30))
+
+    expect(await timelock.admin()).to.equal(bob.address)
+    expect(await timelock.pendingAdmin()).to.equal(constants.AddressZero)
+    expect(await timelock.delay()).to.equal(duration.days(3))
+    expect(await timelock.admin_initialized()).to.equal(false)
+  })
+
+  it("should not allow non-owner to do operation", async () => {
     await wardenToken.transferOwnership(timelock.address)
 
     await expect(wardenToken.transferOwnership(carol.address)).to.be.revertedWith("Ownable: caller is not the owner")
@@ -56,7 +67,7 @@ describe("Timelock", function () {
     ).to.be.revertedWith("Timelock::queueTransaction: Call must come from admin.")
   })
 
-  it("should do the timelock thing", async function () {
+  it("should do the timelock thing", async () => {
     await wardenToken.transferOwnership(timelock.address)
     const eta = (await latest()).add(duration.days(4))
     await timelock
@@ -75,7 +86,7 @@ describe("Timelock", function () {
     expect(await wardenToken.owner()).to.equal(carol.address)
   })
 
-  it("should also work with MasterChef", async function () {
+  it("should also work with MasterChef", async () => {
     lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
     lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
     chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
