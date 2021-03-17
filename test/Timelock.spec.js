@@ -35,7 +35,7 @@ describe("Timelock", () => {
     tempest = await Tempest.deploy(wardenToken.address)
     await tempest.deployed()
 
-    timelock = await Timelock.deploy(bob.address, "259200") // 3 days
+    timelock = await Timelock.deploy(bob.address, "86400") // 1 day
     await timelock.deployed()
   })
 
@@ -46,7 +46,7 @@ describe("Timelock", () => {
 
     expect(await timelock.admin()).to.equal(bob.address)
     expect(await timelock.pendingAdmin()).to.equal(constants.AddressZero)
-    expect(await timelock.delay()).to.equal(duration.days(3))
+    expect(await timelock.delay()).to.equal(duration.days(1))
     expect(await timelock.admin_initialized()).to.equal(false)
   })
 
@@ -135,5 +135,256 @@ describe("Timelock", () => {
     expect((await chef.poolInfo("2")).allocPoint).to.equal("100")
     expect(await chef.totalAllocPoint()).to.equal("300")
     expect(await chef.poolLength()).to.equal("3")
+  })
+
+  it('Should receive ether properly', async () => {
+    const etherAmount =utils.parseEther('1')
+    await expect(() => alice.sendTransaction({
+      to: timelock.address,
+      value: etherAmount
+    }))
+    .to.changeEtherBalance(timelock, etherAmount)
+  })
+
+  it('Should fail if deploy with delay improperly', async () => {
+    await expect(
+      Timelock.deploy(bob.address, duration.hours(12))
+    ).to.be.revertedWith('Timelock::constructor: Delay must exceed minimum delay.')
+    
+    await expect(
+      Timelock.deploy(bob.address, duration.hours(23))
+    ).to.be.revertedWith('Timelock::constructor: Delay must exceed minimum delay.')
+    
+    // expect(duration.hours(24)).to.equal(duration.days(1))
+    await expect(
+      Timelock.deploy(bob.address, duration.days(1))
+    ).to.not.reverted
+    
+    await expect(
+      Timelock.deploy(bob.address, duration.days(30))
+    ).to.not.reverted
+
+    await expect(
+      Timelock.deploy(bob.address, duration.days(31))
+    ).to.be.revertedWith('Timelock::constructor: Delay must not exceed maximum delay.')
+  })
+
+  it('should fail if queue transaction improperly', async () => {
+    lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
+    await wardenToken.transferOwnership(chef.address)
+    await chef.add("100", lp1.address, true)
+    await chef.transferOwnership(timelock.address)
+    let eta
+
+    eta = (await latest()).add(duration.hours(23))
+    await expect(timelock
+      .connect(bob)
+      .queueTransaction(
+        chef.address,
+        "0",
+        "set(uint256,uint256,bool)",
+        encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+        eta
+      )
+    ).to.be.revertedWith('Timelock::queueTransaction: Estimated execution block must satisfy delay.')
+    
+    eta = (await latest()).add(duration.hours(25))
+    await expect(timelock
+      .connect(bob)
+      .queueTransaction(
+        chef.address,
+        "0",
+        "set(uint256,uint256,bool)",
+        encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+        eta
+      )
+    ).to.not.reverted
+  })
+
+  describe('Add some queue transactions', async () => {
+    beforeEach(async () => {
+      lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+      lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+      chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
+      await wardenToken.transferOwnership(chef.address)
+      await chef.add("100", lp1.address, true)
+      await chef.transferOwnership(timelock.address)
+
+      eta = (await latest()).add(duration.hours(25))
+      await timelock
+        .connect(bob)
+        .queueTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+    })
+
+    it('should execute transaction properly', async () => {
+      await increase(duration.hours(25))
+      await timelock
+        .connect(bob)
+        .executeTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+    })
+
+    it('should fail to execute transaction if submit early', async () => {
+      await increase(duration.hours(20))
+      await expect(timelock
+        .connect(bob)
+        .executeTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+      ).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't surpassed time lock.")
+    })
+
+    it('should cancel transaction properly', async () => {
+      await increase(duration.hours(25))
+
+      await timelock
+        .connect(bob)
+        .cancelTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+
+      await expect(timelock
+        .connect(bob)
+        .executeTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+      ).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't been queued.")
+    })
+
+    it('should fail if execute transaction twice', async () => {
+      await increase(duration.hours(25))
+      await timelock
+        .connect(bob)
+        .executeTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+      
+      await expect(timelock
+        .connect(bob)
+        .executeTransaction(
+          chef.address,
+          "0",
+          "set(uint256,uint256,bool)",
+          encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+          eta
+        )
+      ).to.be.revertedWith("Timelock::executeTransaction: Transaction hasn't been queued.")
+    })
+  })
+
+  it('Should fail if submit by non-admin', async () => {
+    lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
+    await wardenToken.transferOwnership(chef.address)
+    await chef.add("100", lp1.address, true)
+    await chef.transferOwnership(timelock.address)
+
+    eta = (await latest()).add(duration.hours(25))
+    await expect(timelock
+      .connect(alice)
+      .queueTransaction(
+        chef.address,
+        "0",
+        "set(uint256,uint256,bool)",
+        encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+        eta
+      )
+    ).to.be.revertedWith("Timelock::queueTransaction: Call must come from admin.")
+
+    await expect(timelock
+      .connect(alice)
+      .cancelTransaction(
+        chef.address,
+        "0",
+        "set(uint256,uint256,bool)",
+        encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+        eta
+      )
+    ).to.be.revertedWith("Timelock::cancelTransaction: Call must come from admin.")
+
+    await expect(timelock
+      .connect(alice)
+      .executeTransaction(
+        chef.address,
+        "0",
+        "set(uint256,uint256,bool)",
+        encodeParameters(["uint256", "uint256", "bool"], ["1", "200", false]),
+        eta
+      )
+    ).to.be.revertedWith("Timelock::executeTransaction: Call must come from admin.")
+
+    await expect(timelock
+      .connect(alice)
+      .setPendingAdmin(carol.address)
+    ).to.be.revertedWith("Timelock::setPendingAdmin: First call must come from admin.")
+  })
+
+  it('Should update admin properly', async () => {
+    expect(await timelock.admin()).to.equal(bob.address)
+
+    await timelock.connect(bob).setPendingAdmin(carol.address)
+    expect(await timelock.pendingAdmin()).to.equal(carol.address)
+
+    await timelock.connect(carol).acceptAdmin()
+    expect(await timelock.admin()).to.equal(carol.address)
+  })
+
+  it('Should update new delay properly', async () => {
+    expect(await timelock.delay()).to.equal(duration.days(1))
+
+    await expect(timelock.connect(bob).setDelay(duration.days(2)))
+    .to.be.revertedWith('Timelock::setDelay: Call must come from Timelock.')
+
+    eta = (await latest()).add(duration.hours(25))
+    await timelock
+      .connect(bob)
+      .queueTransaction(
+        timelock.address,
+        "0",
+        "setDelay(uint256)",
+        encodeParameters(["uint256"], [duration.days(2)]),
+        eta
+      )
+    await increase(duration.hours(26))
+    await timelock
+      .connect(bob)
+      .executeTransaction(
+        timelock.address,
+        "0",
+        "setDelay(uint256)",
+        encodeParameters(["uint256"], [duration.days(2)]),
+        eta
+      )
+    expect(await timelock.delay()).to.equal(duration.days(2))
   })
 })
