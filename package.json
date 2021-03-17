@@ -10,7 +10,8 @@
     "coverage": "npx buidler coverage",
     "flatten:masterchef": "truffle-flattener contracts/MasterChef.sol > flatten/MasterChef.sol",
     "flatten:wardentoken": "truffle-flattener contracts/WardenToken.sol > flatten/WardenToken.sol",
-    "flatten:tempest": "truffle-flattener contracts/Tempest.sol > flatten/Tempest.sol"
+    "flatten:tempest": "truffle-flattener contracts/Tempest.sol > flatten/Tempest.sol",
+    "flatten:timelock": "truffle-flattener contracts/Timelock.sol > flatten/Timelock.sol"
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.1.0",
