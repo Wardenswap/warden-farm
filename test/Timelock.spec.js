@@ -479,7 +479,6 @@ describe("Timelock", () => {
 
       it('Should add WAD-BUSD farm with 30x properly', async () => {
         expect(await chef.totalAllocPoint()).to.equal(8700)
-        // const lp7 = await ERC20Mock.deploy('WAD-BUSD', 'LP', '10000000000')
       
         const chefAddress = chef.address
         const lp7Addpress = '0xc95B1750043FCE5dfCc8539835Ea3830Ec002A89'
@@ -516,8 +515,8 @@ describe("Timelock", () => {
       describe('Add WAD-BUSD with 30x', async () => {
         beforeEach(async () => {
           const chefAddress = chef.address
-          const lp7Addpress = '0xc95B1750043FCE5dfCc8539835Ea3830Ec002A89'
-          const encodedData = encodeParameters(['uint256', 'address', 'bool'], ['3000', lp7Addpress, true])
+          const lp7 = await ERC20Mock.deploy('WAD-BUSD', 'LP', '10000000000')
+          const encodedData = encodeParameters(['uint256', 'address', 'bool'], ['3000', lp7.address, true])
           eta = (await latest()).add(duration.hours(25))
           const queueTx = await timelock
             .connect(bob)
@@ -548,8 +547,6 @@ describe("Timelock", () => {
       
           const chefAddress = chef.address
           const encodedData = encodeParameters(["uint256"], ["20"])
-          console.log('encodedData', encodedData)
-          console.log('')
           eta = (await latest()).add(duration.hours(25))
           const queueTx = await timelock
             .connect(bob)
@@ -560,9 +557,6 @@ describe("Timelock", () => {
               encodedData,
               eta
             )
-          console.log('queueTx', queueTx.data)
-          console.log('')
-          console.log('')
 
           await increase(duration.hours(26))
           const executeTx = await timelock
@@ -574,9 +568,79 @@ describe("Timelock", () => {
               encodedData,
               eta
             )
-          console.log('executeTx', executeTx.data)
           
           expect(await chef.BONUS_MULTIPLIER()).to.equal(20)
+        })
+
+        describe('Multiplier is 20', async () => {
+          beforeEach(async () => {
+            const chefAddress = chef.address
+            const encodedData = encodeParameters(["uint256"], ["20"])
+            eta = (await latest()).add(duration.hours(25))
+            const queueTx = await timelock
+              .connect(bob)
+              .queueTransaction(
+                chefAddress,
+                "0",
+                "updateMultiplier(uint256)",
+                encodedData,
+                eta
+              )
+
+            await increase(duration.hours(26))
+            const executeTx = await timelock
+              .connect(bob)
+              .executeTransaction(
+                chefAddress,
+                "0",
+                "updateMultiplier(uint256)",
+                encodedData,
+                eta
+              )
+          })
+
+          it('Should set Single WAD farm (P0) with 1x properly', async () => {
+            const pool0Before = await chef.poolInfo(0)
+            expect(pool0Before.lpToken).to.equal(wardenToken.address)
+            expect(pool0Before.allocPoint).to.equal(0)
+            expect(await chef.poolLength()).to.equal(8)
+            expect(await chef.totalAllocPoint()).to.equal(11700)
+
+            const chefAddress = chef.address
+            const encodedData = encodeParameters(['uint256', 'uint256', 'bool'], ['0', '100', true])
+            console.log('encodedData', encodedData)
+            console.log('')
+            eta = (await latest()).add(duration.hours(25))
+            const queueTx = await timelock
+              .connect(bob)
+              .queueTransaction(
+                chefAddress,
+                '0',
+                'set(uint256,uint256,bool)',
+                encodedData,
+                eta
+              )
+            console.log('queueTx', queueTx.data)
+            console.log('')
+            console.log('')
+
+            await increase(duration.hours(26))
+            await timelock
+              .connect(bob)
+              .executeTransaction(
+                chefAddress,
+                '0',
+                'set(uint256,uint256,bool)',
+                encodedData,
+                eta
+              )
+            
+            const pool0After = await chef.poolInfo(0)
+            expect(pool0After.lpToken).to.equal(wardenToken.address)
+            expect(pool0After.allocPoint).to.equal(100)
+            expect(await chef.poolLength()).to.equal(8)
+            expect(await chef.totalAllocPoint()).to.equal(11800)
+          })
         })
       })
     })
