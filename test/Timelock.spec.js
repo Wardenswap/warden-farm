@@ -608,8 +608,6 @@ describe("Timelock", () => {
 
             const chefAddress = chef.address
             const encodedData = encodeParameters(['uint256', 'uint256', 'bool'], ['0', '100', true])
-            console.log('encodedData', encodedData)
-            console.log('')
             eta = (await latest()).add(duration.hours(25))
             const queueTx = await timelock
               .connect(bob)
@@ -620,9 +618,6 @@ describe("Timelock", () => {
                 encodedData,
                 eta
               )
-            console.log('queueTx', queueTx.data)
-            console.log('')
-            console.log('')
 
             await increase(duration.hours(26))
             await timelock
@@ -640,6 +635,69 @@ describe("Timelock", () => {
             expect(pool0After.allocPoint).to.equal(100)
             expect(await chef.poolLength()).to.equal(8)
             expect(await chef.totalAllocPoint()).to.equal(11800)
+          })
+
+          describe('Set WAD farm with 1x', async () => {
+            beforeEach(async () => {
+              const chefAddress = chef.address
+              const encodedData = encodeParameters(['uint256', 'uint256', 'bool'], ['0', '100', true])
+              eta = (await latest()).add(duration.hours(25))
+              const queueTx = await timelock
+                .connect(bob)
+                .queueTransaction(
+                  chefAddress,
+                  '0',
+                  'set(uint256,uint256,bool)',
+                  encodedData,
+                  eta
+                )
+
+              await increase(duration.hours(26))
+              await timelock
+                .connect(bob)
+                .executeTransaction(
+                  chefAddress,
+                  '0',
+                  'set(uint256,uint256,bool)',
+                  encodedData,
+                  eta
+                )
+            })
+
+            it('Should update multiplier to 10 properly', async () => {
+              expect(await chef.BONUS_MULTIPLIER()).to.equal(20)
+          
+              const chefAddress = chef.address
+              const encodedData = encodeParameters(["uint256"], ["10"])
+              console.log('encodedData', encodedData)
+              console.log('')
+              eta = (await latest()).add(duration.hours(25))
+              const queueTx = await timelock
+                .connect(bob)
+                .queueTransaction(
+                  chefAddress,
+                  "0",
+                  "updateMultiplier(uint256)",
+                  encodedData,
+                  eta
+                )
+              console.log('queueTx', queueTx.data)
+              console.log('')
+              console.log('')
+    
+              await increase(duration.hours(26))
+              const executeTx = await timelock
+                .connect(bob)
+                .executeTransaction(
+                  chefAddress,
+                  "0",
+                  "updateMultiplier(uint256)",
+                  encodedData,
+                  eta
+                )
+              
+              expect(await chef.BONUS_MULTIPLIER()).to.equal(10)
+            })
           })
         })
       })
