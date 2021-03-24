@@ -87,11 +87,11 @@ describe("Timelock", () => {
   })
 
   it("should also work with MasterChef", async () => {
-    lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
-    lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    wadBnbLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    bnbBusdLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
     chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
     await wardenToken.transferOwnership(chef.address)
-    await chef.add("100", lp1.address, true)
+    await chef.add("100", wadBnbLp.address, true)
     await chef.transferOwnership(timelock.address)
     const eta = (await latest()).add(duration.days(4))
     await timelock
@@ -109,7 +109,7 @@ describe("Timelock", () => {
         chef.address,
         "0",
         "add(uint256,address,bool)",
-        encodeParameters(["uint256", "address", "bool"], ["100", lp2.address, false]),
+        encodeParameters(["uint256", "address", "bool"], ["100", bnbBusdLp.address, false]),
         eta
       )
     await increase(duration.days(4))
@@ -128,7 +128,7 @@ describe("Timelock", () => {
         chef.address,
         "0",
         "add(uint256,address,bool)",
-        encodeParameters(["uint256", "address", "bool"], ["100", lp2.address, false]),
+        encodeParameters(["uint256", "address", "bool"], ["100", bnbBusdLp.address, false]),
         eta
       )
     expect((await chef.poolInfo("1")).allocPoint).to.equal("200")
@@ -170,11 +170,11 @@ describe("Timelock", () => {
   })
 
   it('should fail if queue transaction improperly', async () => {
-    lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
-    lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    wadBnbLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    bnbBusdLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
     chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
     await wardenToken.transferOwnership(chef.address)
-    await chef.add("100", lp1.address, true)
+    await chef.add("100", wadBnbLp.address, true)
     await chef.transferOwnership(timelock.address)
     let eta
 
@@ -205,11 +205,11 @@ describe("Timelock", () => {
 
   describe('Add some queue transactions', async () => {
     beforeEach(async () => {
-      lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
-      lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+      wadBnbLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+      bnbBusdLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
       chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
       await wardenToken.transferOwnership(chef.address)
-      await chef.add("100", lp1.address, true)
+      await chef.add("100", wadBnbLp.address, true)
       await chef.transferOwnership(timelock.address)
 
       eta = (await latest()).add(duration.hours(25))
@@ -302,11 +302,11 @@ describe("Timelock", () => {
   })
 
   it('Should fail if submit by non-admin', async () => {
-    lp1 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
-    lp2 = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    wadBnbLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
+    bnbBusdLp = await ERC20Mock.deploy("LPToken", "LP", "10000000000")
     chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, "1000", "0")
     await wardenToken.transferOwnership(chef.address)
-    await chef.add("100", lp1.address, true)
+    await chef.add("100", wadBnbLp.address, true)
     await chef.transferOwnership(timelock.address)
 
     eta = (await latest()).add(duration.hours(25))
@@ -390,21 +390,21 @@ describe("Timelock", () => {
 
   describe('Update parameters', async () => {
     beforeEach(async () => {
-      lp1 = await ERC20Mock.deploy('WAD-BNB', 'LP', '10000000000')
-      lp2 = await ERC20Mock.deploy('BNB-BUSD', 'LP', '10000000000')
-      lp3 = await ERC20Mock.deploy('BNB-BTCB', 'LP', '10000000000')
-      lp4 = await ERC20Mock.deploy('BNB-ETH', 'LP', '10000000000')
-      lp5 = await ERC20Mock.deploy('BUSD-USDT', 'LP', '10000000000')
-      lp6 = await ERC20Mock.deploy('BNB-CAKE', 'LP', '10000000000')
+      wadBnbLp = await ERC20Mock.deploy('WAD-BNB', 'LP', '10000000000')
+      bnbBusdLp = await ERC20Mock.deploy('BNB-BUSD', 'LP', '10000000000')
+      bnbBtcLp = await ERC20Mock.deploy('BNB-BTCB', 'LP', '10000000000')
+      bnbEthLp = await ERC20Mock.deploy('BNB-ETH', 'LP', '10000000000')
+      busdUsdtLp = await ERC20Mock.deploy('BUSD-USDT', 'LP', '10000000000')
+      bnbCakeLp = await ERC20Mock.deploy('BNB-CAKE', 'LP', '10000000000')
 
       chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, utils.parseUnits('1', 18).toString(), '0')
       await wardenToken.transferOwnership(chef.address)
-      await chef.add('4000', lp1.address, true)
-      await chef.add('2000', lp2.address, true)
-      await chef.add('1000', lp3.address, true)
-      await chef.add('1000', lp4.address, true)
-      await chef.add('500', lp5.address, true)
-      await chef.add('200', lp6.address, true)
+      await chef.add('4000', wadBnbLp.address, true)
+      await chef.add('2000', bnbBusdLp.address, true)
+      await chef.add('1000', bnbBtcLp.address, true)
+      await chef.add('1000', bnbEthLp.address, true)
+      await chef.add('500', busdUsdtLp.address, true)
+      await chef.add('200', bnbCakeLp.address, true)
       await chef.updateMultiplier(80)
       await chef.transferOwnership(timelock.address)
     })
@@ -515,8 +515,8 @@ describe("Timelock", () => {
       describe('Add WAD-BUSD with 30x', async () => {
         beforeEach(async () => {
           const chefAddress = chef.address
-          const lp7 = await ERC20Mock.deploy('WAD-BUSD', 'LP', '10000000000')
-          const encodedData = encodeParameters(['uint256', 'address', 'bool'], ['3000', lp7.address, true])
+          wadBusdLp = await ERC20Mock.deploy('WAD-BUSD', 'LP', '10000000000')
+          const encodedData = encodeParameters(['uint256', 'address', 'bool'], ['3000', wadBusdLp.address, true])
           eta = (await latest()).add(duration.hours(25))
           const queueTx = await timelock
             .connect(bob)
@@ -669,8 +669,6 @@ describe("Timelock", () => {
           
               const chefAddress = chef.address
               const encodedData = encodeParameters(["uint256"], ["10"])
-              console.log('encodedData', encodedData)
-              console.log('')
               eta = (await latest()).add(duration.hours(25))
               const queueTx = await timelock
                 .connect(bob)
@@ -681,9 +679,6 @@ describe("Timelock", () => {
                   encodedData,
                   eta
                 )
-              console.log('queueTx', queueTx.data)
-              console.log('')
-              console.log('')
     
               await increase(duration.hours(26))
               const executeTx = await timelock
@@ -697,6 +692,127 @@ describe("Timelock", () => {
                 )
               
               expect(await chef.BONUS_MULTIPLIER()).to.equal(10)
+            })
+
+            describe('Multiplier is 10', async () => {
+              beforeEach(async () => {
+                const chefAddress = chef.address
+                const encodedData = encodeParameters(["uint256"], ["10"])
+                eta = (await latest()).add(duration.hours(25))
+                const queueTx = await timelock
+                  .connect(bob)
+                  .queueTransaction(
+                    chefAddress,
+                    "0",
+                    "updateMultiplier(uint256)",
+                    encodedData,
+                    eta
+                  )
+      
+                await increase(duration.hours(26))
+                const executeTx = await timelock
+                  .connect(bob)
+                  .executeTransaction(
+                    chefAddress,
+                    "0",
+                    "updateMultiplier(uint256)",
+                    encodedData,
+                    eta
+                  )
+              })
+
+              it('Should update farms allocation points properly', async () => {
+                expect(await chef.poolLength()).to.equal(8)
+                expect(await chef.totalAllocPoint()).to.equal(11800)
+                expect((await chef.poolInfo(0)).allocPoint).to.equal(100) // WAD
+                expect((await chef.poolInfo(1)).allocPoint).to.equal(4000) // WAD-BNB
+                expect((await chef.poolInfo(2)).allocPoint).to.equal(2000) // BUSD-BNB
+                expect((await chef.poolInfo(3)).allocPoint).to.equal(1000) // BTCB-BNB
+                expect((await chef.poolInfo(4)).allocPoint).to.equal(1000) // ETH-BNB
+                expect((await chef.poolInfo(5)).allocPoint).to.equal(500) // USDT-BUSD
+                expect((await chef.poolInfo(6)).allocPoint).to.equal(200) // CAKE-BNB
+                expect((await chef.poolInfo(7)).allocPoint).to.equal(3000) // WAD-BUSD
+
+                const chefAddress = chef.address
+                eta = (await latest()).add(duration.hours(25))
+
+                // Pool 0
+                const pool0 = {
+                  pid: '0',
+                  allocPoint: '200'
+                }
+                const pool0Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool0.pid, pool0.allocPoint, true])
+                console.log('pool0 data', pool0Data)
+                const pool0Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool0Data, eta)
+                console.log('pool0', pool0Queue.data)
+                console.log('')
+
+                // Pool 3
+                const pool3 = {
+                  pid: '3',
+                  allocPoint: '500'
+                }
+                const pool3Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool3.pid, pool3.allocPoint, true])
+                console.log('pool3 data', pool3Data)
+                const pool3Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool3Data, eta)
+                console.log('pool3', pool3Queue.data)
+                console.log('')
+
+                // Pool 4
+                const pool4 = {
+                  pid: '4',
+                  allocPoint: '500'
+                }
+                const pool4Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool4.pid, pool4.allocPoint, true])
+                console.log('pool4 data', pool4Data)
+                const pool4Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool4Data, eta)
+                console.log('pool4', pool4Queue.data)
+                console.log('')
+
+                // Pool 5
+                const pool5 = {
+                  pid: '5',
+                  allocPoint: '200'
+                }
+                const pool5Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool5.pid, pool5.allocPoint, true])
+                console.log('pool5 data', pool5Data)
+                const pool5Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool5Data, eta)
+                console.log('pool5', pool5Queue.data)
+                console.log('')
+
+                await increase(duration.hours(26))
+                await timelock.connect(bob).executeTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool0Data, eta)
+                await timelock.connect(bob).executeTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool3Data, eta)
+                await timelock.connect(bob).executeTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool4Data, eta)
+                await timelock.connect(bob).executeTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool5Data, eta)
+
+                expect(await chef.poolLength()).to.equal(8)
+                expect(await chef.totalAllocPoint()).to.equal(10600)
+
+                expect((await chef.poolInfo(0)).allocPoint).to.equal(200) // WAD
+                expect((await chef.poolInfo(0)).lpToken).to.equal(wardenToken.address)
+
+                expect((await chef.poolInfo(1)).allocPoint).to.equal(4000) // WAD-BNB
+                expect((await chef.poolInfo(1)).lpToken).to.equal(wadBnbLp.address)
+
+                expect((await chef.poolInfo(2)).allocPoint).to.equal(2000) // BUSD-BNB
+                expect((await chef.poolInfo(2)).lpToken).to.equal(bnbBusdLp.address)
+
+                expect((await chef.poolInfo(3)).allocPoint).to.equal(500) // BTCB-BNB
+                expect((await chef.poolInfo(3)).lpToken).to.equal(bnbBtcLp.address)
+
+                expect((await chef.poolInfo(4)).allocPoint).to.equal(500) // ETH-BNB
+                expect((await chef.poolInfo(4)).lpToken).to.equal(bnbEthLp.address)
+
+                expect((await chef.poolInfo(5)).allocPoint).to.equal(200) // USDT-BUSD
+                expect((await chef.poolInfo(5)).lpToken).to.equal(busdUsdtLp.address)
+
+                expect((await chef.poolInfo(6)).allocPoint).to.equal(200) // CAKE-BNB
+                expect((await chef.poolInfo(6)).lpToken).to.equal(bnbCakeLp.address)
+
+                expect((await chef.poolInfo(7)).allocPoint).to.equal(3000) // WAD-BUSD
+                expect((await chef.poolInfo(7)).lpToken).to.equal(wadBusdLp.address)
+              })
             })
           })
         })
