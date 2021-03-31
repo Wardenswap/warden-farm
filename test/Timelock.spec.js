@@ -11,7 +11,7 @@ const { encodeParameters } = require('./utilities')
 chai.use(solidity)
 
 describe("Timelock", () => {
-  const [alice, bob, carol, dev, minter] = waffle.provider.getWallets()
+  const [alice, bob, carol, dev, minter, burner] = waffle.provider.getWallets()
 
   let MasterChef
   let WardenToken
@@ -399,6 +399,7 @@ describe("Timelock", () => {
 
       chef = await MasterChef.deploy(wardenToken.address, tempest.address, dev.address, utils.parseUnits('1', 18).toString(), '0')
       await wardenToken.transferOwnership(chef.address)
+      await tempest.transferOwnership(chef.address)
       await chef.add('4000', wadBnbLp.address, true)
       await chef.add('2000', bnbBusdLp.address, true)
       await chef.add('1000', bnbBtcLp.address, true)
@@ -742,10 +743,7 @@ describe("Timelock", () => {
                   allocPoint: '200'
                 }
                 const pool0Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool0.pid, pool0.allocPoint, true])
-                console.log('pool0 data', pool0Data)
                 const pool0Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool0Data, eta)
-                console.log('pool0', pool0Queue.data)
-                console.log('')
 
                 // Pool 3
                 const pool3 = {
@@ -753,10 +751,7 @@ describe("Timelock", () => {
                   allocPoint: '500'
                 }
                 const pool3Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool3.pid, pool3.allocPoint, true])
-                console.log('pool3 data', pool3Data)
                 const pool3Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool3Data, eta)
-                console.log('pool3', pool3Queue.data)
-                console.log('')
 
                 // Pool 4
                 const pool4 = {
@@ -764,10 +759,7 @@ describe("Timelock", () => {
                   allocPoint: '500'
                 }
                 const pool4Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool4.pid, pool4.allocPoint, true])
-                console.log('pool4 data', pool4Data)
                 const pool4Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool4Data, eta)
-                console.log('pool4', pool4Queue.data)
-                console.log('')
 
                 // Pool 5
                 const pool5 = {
@@ -775,10 +767,7 @@ describe("Timelock", () => {
                   allocPoint: '200'
                 }
                 const pool5Data = encodeParameters(['uint256', 'uint256', 'bool'], [pool5.pid, pool5.allocPoint, true])
-                console.log('pool5 data', pool5Data)
                 const pool5Queue = await timelock.connect(bob).queueTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool5Data, eta)
-                console.log('pool5', pool5Queue.data)
-                console.log('')
 
                 await increase(duration.hours(26))
                 await timelock.connect(bob).executeTransaction(chefAddress, '0', 'set(uint256,uint256,bool)', pool0Data, eta)
@@ -817,6 +806,51 @@ describe("Timelock", () => {
           })
         })
       })
+    })
+
+    it('Should add burn pool properly', async () => {
+      nullifier = await ERC20Mock.deploy("Nullifier", "NULL", "0")
+
+      const chefAddress = chef.address
+      const encodedData = encodeParameters(['uint256', 'address', 'bool'], ['945', nullifier.address, true])
+      eta = (await latest()).add(duration.hours(25))
+      const queueTx = await timelock
+        .connect(bob)
+        .queueTransaction(
+          chefAddress,
+          '0',
+          'add(uint256,address,bool)',
+          encodedData,
+          eta
+        )
+
+      await increase(duration.hours(26))
+      const executeTx = await timelock
+        .connect(bob)
+        .executeTransaction(
+          chefAddress,
+          '0',
+          'add(uint256,address,bool)',
+          encodedData,
+          eta
+        )
+        
+      const pid = (await chef.poolLength()) - 1
+      const burnPool = await chef.poolInfo(pid)
+      expect(burnPool.lpToken).to.equal(nullifier.address)
+      expect(burnPool.allocPoint).to.equal(945)
+
+      expect(await wardenToken.balanceOf(burner.address)).to.equal('0')
+
+      const amount = ethers.utils.parseUnits('28061971', 18)
+      await nullifier.mint(burner.address, amount)
+      await nullifier.connect(burner).approve(chef.address, amount)
+      await chef.connect(burner).deposit(pid, amount)
+      await advanceBlockTo((await waffle.provider.getBlockNumber()) + 10)
+
+      // Harvest
+      await chef.connect(burner).deposit(pid, '0')
+      expect(await wardenToken.balanceOf(burner.address)).to.equal('86220826827065000000')
     })
   })
 })
