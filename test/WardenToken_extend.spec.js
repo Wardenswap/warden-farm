@@ -42,22 +42,6 @@ describe('WardenToken Extend', () => {
         utils.toUtf8Bytes('Delegation(address delegatee,uint256 nonce,uint256 expiry)')
       )
     )
-    expect(await wardenToken.DOMAIN_SEPARATOR()).to.eq(
-      utils.keccak256(
-        utils.defaultAbiCoder.encode(
-          ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
-          [
-            utils.keccak256(
-              utils.toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
-            ),
-            utils.keccak256(utils.toUtf8Bytes(name)),
-            utils.keccak256(utils.toUtf8Bytes('1')),
-            chainId,
-            wardenToken.address
-          ]
-        )
-      )
-    )
     expect(await wardenToken.PERMIT_TYPEHASH()).to.equal(
       utils.keccak256(
         utils.toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)')

@@ -33,16 +33,6 @@ contract Tempest is ERC20('Tempest', 'TST'), Ownable {
         WardenToken _warden
     ) public {
         warden = _warden;
-
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-                keccak256(bytes(name())),
-                keccak256(bytes('1')),
-                getChainId(),
-                address(this)
-            )
-        );
     }
 
     // Safe warden transfer function, just in case if rounding error causes pool to not have enough WADs.
@@ -82,7 +72,6 @@ contract Tempest is ERC20('Tempest', 'TST'), Ownable {
     /// @notice The EIP-712 typehash for the delegation struct used by the contract
     bytes32 public constant DELEGATION_TYPEHASH = keccak256("Delegation(address delegatee,uint256 nonce,uint256 expiry)");
 
-    bytes32 public DOMAIN_SEPARATOR;
     // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
@@ -291,6 +280,17 @@ contract Tempest is ERC20('Tempest', 'TST'), Ownable {
 
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
         require(deadline >= block.timestamp, 'WAD::permit: signature expired');
+
+        bytes32 DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                keccak256(bytes(name())),
+                keccak256(bytes('1')),
+                getChainId(),
+                address(this)
+            )
+        );
+
         bytes32 digest = keccak256(
             abi.encodePacked(
                 '\x19\x01',
